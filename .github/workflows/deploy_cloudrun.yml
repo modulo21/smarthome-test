@@ -1,0 +1,33 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v1
+      with:
+        service_account_key: ${{ secrets.GCLOUD_AUTH }}
+        project_id: ${{ secrets.GCLOUD_PROJECT }}
+
+    - name: Deploy to Cloud Run
+      run: |
+        gcloud run deploy smarthome-test \
+          --image=gcr.io/${{ secrets.GCLOUD_PROJECT }}/${{ github.sha }} \
+          --region=${{ secrets.GCLOUD_REGION }} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --project=${{ secrets.GCLOUD_PROJECT }} \
+          --quiet
+      env:
+        CLOUDSDK_CORE_DISABLE_PROMPTS: "1"
